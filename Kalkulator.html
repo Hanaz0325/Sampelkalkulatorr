@@ -1,0 +1,215 @@
+<!DOCTYPE html><html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Kalkulator Hutang</title>
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      overflow-x: hidden;
+      font-family: Arial, sans-serif;
+      background: linear-gradient(135deg, #f8f8f8, #e0f7fa);
+      animation: fadeIn 1s ease-in;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .container {
+      width: 100%;
+      max-width: 600px;
+      margin: auto;
+      background: #fff;
+      padding: 16px;
+      border-radius: 10px;
+      box-shadow: 0 0 15px rgba(0,0,0,0.1);
+      animation: fadeIn 0.8s ease-in;
+      box-sizing: border-box;
+    }
+    input, button, select {
+      width: 100%;
+      padding: 10px;
+      margin: 10px 0;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+      box-sizing: border-box;
+      font-size: 16px;
+    }
+    input[type="date"] {
+      padding: 8px;
+    }
+    button {
+      background: #4CAF50;
+      color: white;
+      border: none;
+      cursor: pointer;
+      transition: background 0.3s ease;
+    }
+    button:hover {
+      background: #45a049;
+    }
+    .result {
+      margin-top: 20px;
+      font-weight: bold;
+      animation: fadeIn 0.5s ease-in;
+    }
+    .actions {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-top: 10px;
+    }
+    .table-wrapper {
+      overflow-x: auto;
+    }
+    table {
+      width: 100%;
+      min-width: 480px;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+    table, th, td {
+      border: 1px solid #ccc;
+    }
+    th, td {
+      padding: 10px;
+      text-align: left;
+    }
+    .hapus-btn {
+      background: #f44336;
+      color: white;
+      padding: 5px 10px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    .hapus-btn:hover {
+      background: #d32f2f;
+    }
+    @media print {
+      button, .actions, .hapus-btn, #filterNama { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>Kalkulator Hutang</h2><label>Nama Penghutang:</label>
+<input type="text" id="nama" placeholder="Contoh: Budi" />
+
+<label>Tanggal Jatuh Tempo:</label>
+<input type="date" id="tempo" />
+
+<label>Total Hutang (Rp):</label>
+<input type="text" id="total" placeholder="Contoh: 1.000.000" oninput="formatInput(this)" />
+
+<label>Jumlah yang Dibayar (Rp):</label>
+<input type="text" id="bayar" placeholder="Contoh: 250.000" oninput="formatInput(this)" />
+
+<button onclick="tambahHutang()">Tambah ke Daftar</button>
+
+<label>Cari Nama:</label>
+<input type="text" id="filterNama" placeholder="Ketik nama untuk mencari" oninput="filterTable()" />
+
+<div class="result" id="hasil"></div>
+
+<div class="table-wrapper">
+  <table id="tabelHutang">
+    <thead>
+      <tr>
+        <th>Nama</th>
+        <th>Tempo</th>
+        <th>Total</th>
+        <th>Dibayar</th>
+        <th>Sisa</th>
+        <th>Aksi</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+</div>
+
+<div class="actions">
+  <button onclick="kirimWhatsApp()">Kirim via WhatsApp</button>
+  <button onclick="window.print()">Cetak</button>
+</div>
+
+  </div>  <script>
+    function formatRupiah(angka) {
+      return 'Rp ' + angka.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+    }
+
+    function parseRupiah(str) {
+      return parseInt(str.replace(/\D/g, '')) || 0;
+    }
+
+    function formatInput(input) {
+      let value = input.value.replace(/\D/g, '');
+      input.value = value.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+    }
+
+    function tambahHutang() {
+      const nama = document.getElementById("nama").value;
+      const tempo = document.getElementById("tempo").value;
+      const totalStr = document.getElementById("total").value;
+      const bayarStr = document.getElementById("bayar").value;
+
+      const total = parseRupiah(totalStr);
+      const bayar = parseRupiah(bayarStr);
+
+      if (!nama || !tempo || total === 0) {
+        document.getElementById("hasil").innerText = "Mohon isi semua kolom dengan benar.";
+        return;
+      }
+
+      const sisa = total - bayar;
+      const sisaText = sisa > 0 ? formatRupiah(sisa) : (sisa === 0 ? "Lunas" : "Lebih bayar " + formatRupiah(Math.abs(sisa)));
+
+      const row = document.createElement("tr");
+      row.innerHTML = `
+        <td>${nama}</td>
+        <td>${tempo}</td>
+        <td>${formatRupiah(total)}</td>
+        <td>${formatRupiah(bayar)}</td>
+        <td>${sisaText}</td>
+        <td><button class="hapus-btn" onclick="hapusBaris(this)">Hapus</button></td>
+      `;
+
+      document.querySelector("#tabelHutang tbody").appendChild(row);
+
+      document.getElementById("hasil").innerText = `Data untuk ${nama} ditambahkan.`;
+      document.getElementById("nama").value = "";
+      document.getElementById("tempo").value = "";
+      document.getElementById("total").value = "";
+      document.getElementById("bayar").value = "";
+    }
+
+    function hapusBaris(button) {
+      const row = button.closest("tr");
+      row.remove();
+    }
+
+    function kirimWhatsApp() {
+      let pesan = "Daftar Hutang:\n";
+      const rows = document.querySelectorAll("#tabelHutang tbody tr");
+      if (rows.length === 0) {
+        alert("Belum ada data untuk dikirim.");
+        return;
+      }
+      rows.forEach(row => {
+        const cols = row.querySelectorAll("td");
+        pesan += `- ${cols[0].innerText}, Tempo: ${cols[1].innerText}, Total: ${cols[2].innerText}, Bayar: ${cols[3].innerText}, Sisa: ${cols[4].innerText}\n`;
+      });
+      window.open(`https://wa.me/?text=${encodeURIComponent(pesan)}`, '_blank');
+    }
+
+    function filterTable() {
+      const input = document.getElementById("filterNama").value.toLowerCase();
+      const rows = document.querySelectorAll("#tabelHutang tbody tr");
+      rows.forEach(row => {
+        const nama = row.querySelector("td").innerText.toLowerCase();
+        row.style.display = nama.includes(input) ? "" : "none";
+      });
+    }
+  </script></body>
+</html>
